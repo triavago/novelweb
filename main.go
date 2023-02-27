@@ -29,6 +29,7 @@ func main() {
 	}
 	router.POST("/post", createArticle(collection))
 	router.GET("/novel/:id", getNovelByID(collection))
+	router.PUT("/novel/:id", editArticleById(collection))
 	router.Run()
 }
 
