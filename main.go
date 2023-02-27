@@ -20,6 +20,7 @@ type Novel struct {
 }
 
 func main() {
+	//w89EPNlkYf0tv1Er
 	router := gin.Default()
 	client, err := connectDB()
 	collection := client.Database("novel").Collection("articles")
@@ -91,5 +92,31 @@ func createArticle(collection *mongo.Collection) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, gin.H{"id": result.InsertedID})
+	}
+}
+
+func editArticleById(collection *mongo.Collection) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := primitive.ObjectIDFromHex(c.Param("id"))
+		if err != nil {
+			log.Fatalln("Wrong id")
+		}
+		var updatedArticle Novel
+		if err := c.ShouldBindJSON(&updatedArticle); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error: ":err.Error()})
+			return
+		}
+		filter := bson.M{"_id":id}
+		update := bson.M{"$set":bson.M{"title": updatedArticle.Title, "content": updatedArticle.Content, "author": updatedArticle.Author}}
+		result, err := collection.UpdateOne(context.Background(), filter, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error: ": err.Error()})
+			return
+		}
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error: ": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"Article status: ":"updated"})
 	}
 }
